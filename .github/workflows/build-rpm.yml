@@ -45,6 +45,12 @@ jobs:
 
       - name: Build the .rpm
         run: |
+          # The container runs as root while the checkout belongs to the runner's
+          # user, and git refuses to read such a tree until it is told the
+          # directory is trusted. actions/checkout only covers the paths it uses
+          # itself, which is not this one.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
           version=$(sed -n '/^\[workspace\.package\]/,/^\[/ s/^version *= *"\([^"]*\)".*/\1/p' Cargo.toml | head -1)
           mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
           git archive --prefix="cosmic-nightlight-$version/" \

@@ -38,6 +38,9 @@ BuildRequires:  libxkbcommon-devel
 BuildRequires:  wayland-devel
 BuildRequires:  fontconfig-devel
 BuildRequires:  expat-devel
+# %{_userunitdir} is not an rpm macro of its own; macros.systemd defines it, and
+# without this the expansion is left literal and %files rejects the line.
+BuildRequires:  systemd-rpm-macros
 
 # The privileged helper is reached through pkexec, which polkit provides.
 Requires:       polkit
@@ -103,3 +106,7 @@ install -D -m0644 debian/cosmic-nightlight.user.service \
 %{_datadir}/icons/hicolor/128x128/apps/io.github.cosmic_nightlight.png
 %{_datadir}/polkit-1/rules.d/49-cosmic-nightlight.rules
 %{_userunitdir}/cosmic-nightlight.service
+
+%changelog
+* Thu Oct 15 2026 abu-matterize <abu@matterize.io> - 0.5.1-1
+- Initial RPM packaging.

@@ -32,7 +32,7 @@ jobs:
             git-core patch rpm-build \
             cargo gcc gcc-c++ pkgconf-pkg-config \
             libdrm-devel libxkbcommon-devel wayland-devel \
-            fontconfig-devel expat-devel
+            fontconfig-devel expat-devel systemd-rpm-macros
 
       - uses: actions/checkout@v7
 

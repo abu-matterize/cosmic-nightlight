@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: MPL-2.0
+name: Build RPM
+
+# Tag builds only, like the flatpak workflow: the .rpm is a release artifact, and
+# the .deb workflow already proves on every push and pull request that the tree
+# still packages. Run it by hand from the Actions tab to test a change to the
+# spec or to this file.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-rpm:
+    runs-on: ubuntu-24.04
+    # A Fedora container for rpmbuild and the Fedora -devel packages, so the
+    # package comes out native to Fedora rather than to the runner's Ubuntu. The
+    # cost is that it links the container's glibc, so it installs on fedora:44 and
+    # newer and not on older Fedora. Change this one line to target a different
+    # Fedora.
+    container: fedora:44
+    permissions:
+      contents: write   # required so tag builds can attach the .rpm to the Release
+    steps:
+      # Ahead of checkout, which needs git inside the container.
+      - name: Install the toolchain and the build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            git-core patch rpm-build \
+            cargo gcc gcc-c++ pkgconf-pkg-config \
+            libdrm-devel libxkbcommon-devel wayland-devel \
+            fontconfig-devel expat-devel
+
+      - uses: actions/checkout@v7
+
+      # The version is written in four places and only the tag says which of them
+      # the release intends, so check they agree before building anything with
+      # them. The spec is one of the four.
+      - name: Check the version agrees with the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: scripts/check-version.sh "$GITHUB_REF_NAME"
+
+      - name: Build the .rpm
+        run: |
+          version=$(sed -n '/^\[workspace\.package\]/,/^\[/ s/^version *= *"\([^"]*\)".*/\1/p' Cargo.toml | head -1)
+          mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+          git archive --prefix="cosmic-nightlight-$version/" \
+            -o ~/rpmbuild/SOURCES/"cosmic-nightlight-$version.tar.gz" HEAD
+          rpmbuild -bb rpm/cosmic-nightlight.spec
+
+          mkdir -p dist
+          cp ~/rpmbuild/RPMS/*/*.rpm dist/
+          ls -l dist/
+
+      - name: Upload the .rpm as a build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: cosmic-nightlight-rpm
+          path: dist/*.rpm
+          if-no-files-found: error
+
+      # Unlike the flatpak workflow this does not wait for the .deb workflow to
+      # create the Release. This action creates it when it is missing and leaves
+      # an existing body alone when no body is given, so whichever of the two runs
+      # first does the creating and the other just attaches its file.
+      - name: Attach the .rpm to the Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*.rpm

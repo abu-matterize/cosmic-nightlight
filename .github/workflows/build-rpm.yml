@@ -34,7 +34,7 @@ jobs:
             libdrm-devel libxkbcommon-devel wayland-devel \
             fontconfig-devel expat-devel systemd-rpm-macros
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
       # The version is written in four places and only the tag says which of them
       # the release intends, so check they agree before building anything with
@@ -65,7 +65,7 @@ jobs:
           ls -l dist/
 
       - name: Upload the .rpm as a build artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: cosmic-nightlight-rpm
           path: dist/*.rpm

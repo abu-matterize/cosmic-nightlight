@@ -51,7 +51,10 @@ jobs:
           # itself, which is not this one.
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-          version=$(sed -n '/^\[workspace\.package\]/,/^\[/ s/^version *= *"\([^"]*\)".*/\1/p' Cargo.toml | head -1)
+          # Name the archive after the spec's own Version, since that is the name
+          # rpmbuild looks for. Taking it from Cargo.toml instead fails a manual
+          # run whenever the two have drifted apart.
+          version=$(rpmspec -q --srpm --qf '%{version}' rpm/cosmic-nightlight.spec)
           mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
           git archive --prefix="cosmic-nightlight-$version/" \
             -o ~/rpmbuild/SOURCES/"cosmic-nightlight-$version.tar.gz" HEAD

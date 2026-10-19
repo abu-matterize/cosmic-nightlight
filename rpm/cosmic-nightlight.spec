@@ -6,7 +6,7 @@
 # it by hand on Fedora, rpmbuild wants a source archive rather than a working
 # tree, so make one first:
 #
-#   version=$(sed -n '/^\[workspace\.package\]/,/^\[/ s/^version *= *"\([^"]*\)".*/\1/p' Cargo.toml | head -1)
+#   version=$(rpmspec -q --srpm --qf '%{version}' rpm/cosmic-nightlight.spec)
 #   mkdir -p ~/rpmbuild/SOURCES
 #   git archive --prefix="cosmic-nightlight-$version/" \
 #       -o ~/rpmbuild/SOURCES/"cosmic-nightlight-$version.tar.gz" HEAD

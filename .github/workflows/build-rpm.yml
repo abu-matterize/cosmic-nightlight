@@ -29,7 +29,7 @@ jobs:
       - name: Install the toolchain and the build dependencies
         run: |
           dnf install -y --setopt=install_weak_deps=False \
-            git-core patch rpm-build \
+            git-core gh patch rpm-build \
             cargo gcc gcc-c++ pkgconf-pkg-config \
             libdrm-devel libxkbcommon-devel wayland-devel \
             fontconfig-devel expat-devel systemd-rpm-macros
@@ -68,12 +68,20 @@ jobs:
           path: dist/*.rpm
           if-no-files-found: error
 
-      # Unlike the flatpak workflow this does not wait for the .deb workflow to
-      # create the Release. This action creates it when it is missing and leaves
-      # an existing body alone when no body is given, so whichever of the two runs
-      # first does the creating and the other just attaches its file.
       - name: Attach the .rpm to the Release
         if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v3
-        with:
-          files: dist/*.rpm
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # The .deb workflow is what creates the Release, with its title and
+          # notes, so wait for it rather than race it, as the flatpak workflow
+          # does. If this job created it first, the Release would go out bare,
+          # and stay that way with only the .rpm if the .deb build then failed.
+          # Only the asset is uploaded, leaving the notes that job wrote alone.
+          for _ in $(seq 1 30); do
+            gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 && break
+            echo "waiting for the Release to be created..."
+            sleep 20
+          done
+          gh release upload "$GITHUB_REF_NAME" dist/*.rpm --clobber

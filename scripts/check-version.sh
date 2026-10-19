@@ -20,7 +20,7 @@
 # step buried in CI, which can only tell you after the tag exists:
 #
 #   ./scripts/check-version.sh v0.5.0   # against an intended tag
-#   ./scripts/check-version.sh          # just check the three agree
+#   ./scripts/check-version.sh          # just check the four agree
 set -eu
 
 metainfo="data/io.github.cosmic_nightlight.metainfo.xml"
@@ -33,7 +33,8 @@ changelog_version=${changelog_version%-*}
 metainfo_version=$(sed -n 's/.*<release version="\([^"]*\)".*/\1/p' "$metainfo" | head -1)
 
 # The RPM spec's own `Version:` tag, which rpmbuild reads.
-rpm_version=$(sed -n 's/^Version: *\(.*\)/\1/p' rpm/cosmic-nightlight.spec | head -1)
+# Spaces or tabs may sit on either side of the value; keep only the value.
+rpm_version=$(sed -n 's/^Version:[[:space:]]*\([^[:space:]]*\).*/\1/p' rpm/cosmic-nightlight.spec | head -1)
 
 # Only the [workspace.package] version, not any dependency's.
 cargo_version=$(sed -n '/^\[workspace\.package\]/,/^\[/ s/^version *= *"\([^"]*\)".*/\1/p' Cargo.toml | head -1)

@@ -1,5 +1,8 @@
 <!-- SPDX-License-Identifier: MPL-2.0 -->
-# Packaging cosmic-nightlight as a `.deb`
+# Packaging cosmic-nightlight
+
+This covers the `.deb`, which most of this file is about, and the `.rpm` for
+Fedora (see [RPM (Fedora)](#rpm-fedora)).
 
 This tool needs root (DRM master + VT switching), so its natural distribution
 channel is a **native `.deb`**. A `.deb` shows up in the COSMIC Store as the
